@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import UniqueConstraint
 
 User = get_user_model()
 
@@ -16,17 +15,18 @@ class Group(models.Model):
 
 class Post(models.Model):
     text = models.TextField()
-    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
+    pub_date = models.DateTimeField(
+        'Дата публикации', auto_now_add=True
+    )
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='posts'
     )
-    image = models.ImageField(upload_to='posts/', null=True, blank=True)
+    image = models.ImageField(
+        upload_to='posts/', null=True, blank=True
+    )  # поле для картинки
     group = models.ForeignKey(
-        Group,
-        on_delete=models.CASCADE,
-        related_name="posts",
-        blank=True,
-        null=True,
+        Group, on_delete=models.SET_NULL,
+        related_name='posts', blank=True, null=True
     )
 
     def __str__(self):
@@ -44,27 +44,3 @@ class Comment(models.Model):
     created = models.DateTimeField(
         'Дата добавления', auto_now_add=True, db_index=True
     )
-
-
-class Follow(models.Model):
-    """Класс Follow определеяет ключевые
-    параметры системы подписки на авторов.
-    """
-
-    user = models.ForeignKey(
-        User,
-        verbose_name='Имя подписчика',
-        on_delete=models.CASCADE,
-        related_name='follower',
-    )
-    following = models.ForeignKey(
-        User,
-        verbose_name='Имя автора',
-        on_delete=models.CASCADE,
-        related_name='following',
-    )
-
-    class Meta:
-        UniqueConstraint(name='unique_following', fields=['user', 'following'])
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
