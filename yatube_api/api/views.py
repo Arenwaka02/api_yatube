@@ -1,9 +1,8 @@
-from http import HTTPStatus
-
 from django.shortcuts import get_object_or_404
 from posts.models import Group, Post
-from rest_framework import status, viewsets
-from rest_framework.response import Response
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
 from .permissions import IsAuthorOrReadOnly
 from .serializers import CommentSerializer, GroupSerializer, PostSerializer
 
@@ -11,7 +10,7 @@ from .serializers import CommentSerializer, GroupSerializer, PostSerializer
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = (IsAuthorOrReadOnly, IsAuthenticated,)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -24,8 +23,6 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         if instance.author != self.request.user:
             raise IsAuthorOrReadOnly('Запрещено')
-        if self.request.user != instance.author:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
         super(PostViewSet, self).perform_destroy(instance)
 
 
@@ -36,7 +33,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = (IsAuthorOrReadOnly, IsAuthenticated,)
 
     def get_queryset(self):
         post = get_object_or_404(Post, pk=self.kwargs['post_id'])
